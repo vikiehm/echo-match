@@ -1,0 +1,54 @@
+# general setting
+backend: dp # DataParallel
+type: Echo_Match_Model
+num_gpu: auto
+manual_seed: 1234
+
+# path
+path:
+  resume_state: checkpoints/echo_match/echo_match_becos_dino.pth
+  resume: false
+
+# datasets
+datasets:
+  test_dataset:
+    name: BeCoSP2PTest
+    type: BeCoSDataset
+    data_root: ../data/BeCoS/partial_partial/test
+    shape_scale: default
+    return_evecs: True
+    return_faces: True
+    num_evecs: 50
+    return_corr: True
+    return_dist: True
+    return_dino: True
+# network setting
+networks:
+  echo_match_net:
+    type: Echo_Match_Net
+    input_type: dino
+    cfg: 
+      feature_extractor:
+        in_channels: 768
+        out_channels: 128
+      overlap:
+        neighbor_size: 64
+        hidden_channels: 16
+        blocks: 3
+      fmap:
+        n_fmap: 50  # number of eigenvectors used for fmap
+        lambda_: 100
+        resolvant_gamma: 0.5
+
+# validation setting
+val:
+  save_geo_errors: true
+  metrics:
+    geo_error:
+      type: calculate_geodesic_error
+    plot_pck_per_pair:
+      type: plot_pck_multiple
+    plot_pck:
+      type: plot_pck
+    plot_iou_curve:
+      type: plot_iou_curve

@@ -1,0 +1,89 @@
+# general setting
+backend: dp # DataParallel
+type: Echo_Match_Model
+num_gpu: auto
+manual_seed: 1234
+lambda: 1000000
+# path
+path:
+  resume: false
+
+# datasets
+datasets:
+  train_dataset:
+    name: CP2PTrain
+    type: PairCP2PDataset
+    data_root: ../data/CP2P24/train
+    return_evecs: True
+    return_faces: True
+    num_evecs: 50
+    return_corr: True 
+    return_dist: False
+    return_dino: True
+  test_dataset:
+    name: CP2PVal
+    type: PairCP2PDataset
+    data_root: ../data/CP2P24/test
+    return_evecs: True
+    return_faces: True
+    num_evecs: 50
+    return_corr: True
+    return_dist: True
+    return_dino: True
+  batch_size: 1
+  num_worker: 1
+
+# network setting
+networks:
+  echo_match_net:
+    type: Echo_Match_Net
+    input_type: dino
+    cfg: 
+      feature_extractor:
+        in_channels: 768
+        out_channels: 128
+      overlap:
+        neighbor_size: 64
+        hidden_channels: 16
+        blocks: 3
+      fmap:
+        n_fmap: 50  # number of eigenvectors used for fmap
+        lambda_: 100
+        resolvant_gamma: 0.5
+
+# training setting
+train:
+  total_epochs: 900 
+  optims:
+    echo_match_net:
+      type: Adam
+      lr: 1.0e-3
+      betas: [0.9, 0.99]
+  schedulers:
+    echo_match_net:
+      type: StepLR
+      step_size: 100
+      gamma: 0.5
+  losses:
+    echo_match_loss:
+      type: EchoMatchLoss
+      w_fmap: 1
+      w_acc: 1
+      w_nce_self: 0.1
+      w_nce_cross: 0.1
+
+# validation setting
+val:
+  val_freq: 1000
+  metrics:
+    geo_error:
+      type: calculate_geodesic_error
+    plot_pck:
+      type: plot_pck
+    plot_iou_curve:
+      type: plot_iou_curve
+
+# log setting
+logger:
+  print_freq: 20
+  save_checkpoint_freq: 1000
